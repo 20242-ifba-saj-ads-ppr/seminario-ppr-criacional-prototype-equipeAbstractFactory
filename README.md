@@ -571,9 +571,9 @@ GAMMA, Erich; HELM, Richard; JOHNSON, Ralph; VLISSIDES, John. Padrões de Projet
 
 ## Outros Exemplos de Código
 
-Exemplo prático Prototype: Clonagem de carros
+Exemplo prático Prototype: Concessionária
 
-Imagine que estamos desenvolvendo um sistema para uma concessionária. O sistema precisa criar vários carros iguais rapidamente, sem precisar configurar tudo do zero.
+Imagine que estamos desenvolvendo um sistema para uma concessionária. O sistema precisa criar vários carros e motos iguais rapidamente, sem precisar configurar tudo do zero.
 
 Em vez de instanciar um novo objeto manualmente toda vez, usamos o padrão Prototype para clonar um modelo base.
 
@@ -582,25 +582,33 @@ Em vez de instanciar um novo objeto manualmente toda vez, usamos o padrão Proto
 
 ```mermaid
 classDiagram
-    class CarroPrototype {
-        +CarroPrototype clone()
+    class IPrototype{
+        +T clone()
     }
 
     class Carro {
         - String modelo
         - String cor
         - int ano
-        + Carro(String modelo, String cor, int ano)
-        + CarroPrototype clone()
+        + Carro (String modelo, String cor, int ano)
+        + Carro clone()
+        + void exibirInfo()
+    }
+
+    class Moto {
+        - String marca
+        - int cilindradas
+        + Moto (String marca, int cilindradas)
+        + Moto clone()
         + void exibirInfo()
     }
 
     class Cliente {
-        + static void main(String[] args)
     }
 
-    CarroPrototype <|.. Carro
-    Cliente ..> CarroPrototype : usa
+    IPrototype <|.. Carro
+    IPrototype <|.. Moto
+    Cliente ..> IPrototype : usa
 ```
 
 
@@ -611,8 +619,8 @@ classDiagram
 1. Interface que define o método clone()
 
 ```java
-public interface CarroPrototype {
-    CarroPrototype clone();  // Método que retorna uma cópia do objeto
+public interface IPrototype<T> {
+    T clone();  // Método que retorna uma cópia do objeto
 }
 ```
 
@@ -621,7 +629,7 @@ public interface CarroPrototype {
 2. Classe concreta que implementa o Prototype
 
 ```java
-public class Carro implements CarroPrototype {
+public class Carro implements IPrototype<Carro> {
     private String modelo;
     private String cor;
     private int ano;
@@ -634,13 +642,32 @@ public class Carro implements CarroPrototype {
 
     // Implementação do método clone()
     @Override
-    public CarroPrototype clone() {
+    public Carro clone() {
         return new Carro(this.modelo, this.cor, this.ano);
     }
 
     // Método para exibir informações do carro
     public void exibirInfo() {
         System.out.println("Carro: " + modelo + " | Cor: " + cor + " | Ano: " + ano);
+    }
+}
+
+public class Moto implements IPrototype<Moto> {
+    private String marca;
+    private int cilindradas;
+
+    public Moto(String marca, int cilindradas) {
+        this.marca = marca;
+        this.cilindradas = cilindradas;
+    }
+
+    @Override
+    public Moto clone() {
+        return new Moto(this.marca, this.cilindradas); // Clonagem direta
+    }
+
+    public void exibirInfo() {
+        System.out.println("Moto: " + marca + " | Cilindradas: " + cilindradas);
     }
 }
 ```
@@ -652,34 +679,34 @@ public class Carro implements CarroPrototype {
 ```java
 public class Cliente {
     public static void main(String[] args) {
-        // Criamos um carro base (protótipo)
-        Carro carroOriginal = new Carro("Sedan", "Vermelho", 2022);
-        carroOriginal.exibirInfo();
+        Carro carroOriginal = new Carro("SUV", "Preto", 2024);
+        Moto motoOriginal = new Moto("Yamaha", 150);
 
-        // Clonamos o carro original para criar outro sem precisar recriar tudo
-        CarroPrototype carroClonado = carroOriginal.clone();
-        
-        // Exibindo o carro clonado
-        System.out.println("Clonando carro...");
-        ((Carro) carroClonado).exibirInfo();
+        Carro carroClonado = carroOriginal.clone();
+        Moto motoClonada = motoOriginal.clone();
+
+        System.out.println("Objetos originais:");
+        carroOriginal.exibirInfo();
+        motoOriginal.exibirInfo();
+
+        System.out.println("\nObjetos clonados:");
+        carroClonado.exibirInfo();
+        motoClonada.exibirInfo();
     }
 }
 ```
 
 ### Explicação do código
-	1.	Criamos a interface CarroPrototype, que obriga todas as classes a implementarem o método clone().
-	2.	Criamos a classe Carro, que implementa CarroPrototype e contém os atributos modelo, cor e ano.
-	3.	No método clone(), criamos um novo objeto com os mesmos atributos do original.
-	4.	No main, criamos um carro original e depois clonamos ele, sem precisar configurar tudo novamente.
+1. Criamos a interface IPrototype, que obriga todas as classes a implementarem o método clone().
+2.	Criamos a classe Carro, que implementa IPrototype e contém os atributos modelo, cor e ano.
+3.	No método clone(), criamos um novo objeto com os mesmos atributos do original.
+4.	No main, criamos um carro original e depois clonamos ele, sem precisar configurar tudo novamente.
 
 
 ### Participantes:
-O padrão Prototype, conforme descrito no livro do GoF, possui três principais participantes: Prototype, ConcretePrototype e Client.
-
-#### Em nossa implementação, esses conceitos foram aplicados da seguinte forma:
-	1.	Prototype: No GoF, o Prototype é uma interface que define o método clone(), garantindo que todas as classes que a implementam possam ser clonadas. No nosso código, esse papel é desempenhado pela interface CarroPrototype, que contém o método clone() para permitir a duplicação de objetos.
-
-	2.	ConcretePrototype: No GoF, o ConcretePrototype é a classe concreta que implementa a interface Prototype e define como a clonagem deve ser realizada. No nosso código, a classe Carro cumpre esse papel, pois implementa CarroPrototype e fornece uma implementação do método clone(), garantindo que um novo objeto com os mesmos atributos do original seja criado.
-    
-	3.	Client: No GoF, o Client é responsável por utilizar o Prototype para criar novos objetos sem precisar instanciá-los diretamente. Em nosso código, esse papel é desempenhado pela classe Cliente, que instancia um objeto Carro, clona esse objeto chamando clone() e exibe as informações do carro original e do carro clonado.
-
+- **Prototype (IPrototype)**
+declara uma interface para clonar a si próprio.
+- **ConcretePrototype (Carro, Moto)**
+implementa uma operação para clonar a si próprio.
+- **Client (Client)**
+cria um novo objeto solicitando a um protótipo que clone a si próprio.
