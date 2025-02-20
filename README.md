@@ -582,15 +582,25 @@ Em vez de instanciar um novo objeto manualmente toda vez, usamos o padrão Proto
 
 ```mermaid
 classDiagram
-    class IPrototype{
+    class IPrototype {
         +T clone()
+    }
+
+    class Veiculo {
+        - String identificador
+        + Veiculo()
+        + Veiculo(String identificador)
+        - String gerarIdentificador()
+        + String getIdentificador()
+        + abstract void exibirInfo()
     }
 
     class Carro {
         - String modelo
         - String cor
         - int ano
-        + Carro (String modelo, String cor, int ano)
+        + Carro(String modelo, String cor, int ano)
+        + Carro(String modelo, String cor, int ano, String identificador)
         + Carro clone()
         + void exibirInfo()
     }
@@ -598,7 +608,8 @@ classDiagram
     class Moto {
         - String marca
         - int cilindradas
-        + Moto (String marca, int cilindradas)
+        + Moto(String marca, int cilindradas)
+        + Moto(String marca, int cilindradas, String identificador)
         + Moto clone()
         + void exibirInfo()
     }
@@ -606,8 +617,9 @@ classDiagram
     class Cliente {
     }
 
-    IPrototype <|.. Carro
-    IPrototype <|.. Moto
+    IPrototype <|.. Veiculo
+    Veiculo <|-- Carro
+    Veiculo <|-- Moto
     Cliente ..> IPrototype : usa
 ```
 
@@ -624,53 +636,93 @@ public interface IPrototype<T> {
 }
 ```
 
-#### Classe concreta (Carro)
+#### Classe abstrata veiculo e classes filhas(Carro e Moto)
 
-2. Classe concreta que implementa o Prototype
+2. Classe pai que implementa o Prototype
 
 ```java
-public class Carro implements IPrototype<Carro> {
+import java.util.UUID;
+
+public abstract class Veiculo implements IPrototype<Veiculo> {
+    protected String identificador;
+
+    public Veiculo() {
+        this.identificador = gerarIdentificador();
+    }
+
+    protected Veiculo(String identificador) {
+        this.identificador = identificador;
+    }
+
+    private String gerarIdentificador() {
+        return UUID.randomUUID().toString();
+    }
+
+    public String getIdentificador() {
+        return identificador;
+    }
+
+    public abstract void exibirInfo();
+}
+
+class Carro extends Veiculo {
     private String modelo;
     private String cor;
     private int ano;
 
     public Carro(String modelo, String cor, int ano) {
+        super();
         this.modelo = modelo;
         this.cor = cor;
         this.ano = ano;
     }
 
-    // Implementação do método clone()
-    @Override
-    public Carro clone() {
-        return new Carro(this.modelo, this.cor, this.ano);
+    private Carro(String modelo, String cor, int ano, String identificador) {
+        super(identificador);
+        this.modelo = modelo;
+        this.cor = cor;
+        this.ano = ano;
     }
 
-    // Método para exibir informações do carro
+    @Override
+    public Carro clone() {
+        return new Carro(this.modelo, this.cor, this.ano, this.identificador);
+    }
+
+    @Override
     public void exibirInfo() {
-        System.out.println("Carro: " + modelo + " | Cor: " + cor + " | Ano: " + ano);
+        System.out.println("Carro: " + modelo + " | Cor: " + cor + " | Ano: " + ano + " | Identificador: " + identificador);
     }
 }
 
-public class Moto implements IPrototype<Moto> {
+class Moto extends Veiculo {
     private String marca;
     private int cilindradas;
 
     public Moto(String marca, int cilindradas) {
+        super();
+        this.marca = marca;
+        this.cilindradas = cilindradas;
+    }
+
+    private Moto(String marca, int cilindradas, String identificador) {
+        super(identificador);
         this.marca = marca;
         this.cilindradas = cilindradas;
     }
 
     @Override
     public Moto clone() {
-        return new Moto(this.marca, this.cilindradas); // Clonagem direta
+        return new Moto(this.marca, this.cilindradas, this.identificador);
     }
 
+    @Override
     public void exibirInfo() {
-        System.out.println("Moto: " + marca + " | Cilindradas: " + cilindradas);
+        System.out.println("Moto: " + marca + " | Cilindradas: " + cilindradas + " | Identificador: " + identificador);
     }
 }
 ```
+
 
 #### Classe Cliente (Main)
 
@@ -698,15 +750,17 @@ public class Cliente {
 
 ### Explicação do código
 1. Criamos a interface IPrototype, que obriga todas as classes a implementarem o método clone().
-2.	Criamos a classe Carro, que implementa IPrototype e contém os atributos modelo, cor e ano.
-3.	No método clone(), criamos um novo objeto com os mesmos atributos do original.
-4.	No main, criamos um carro original e depois clonamos ele, sem precisar configurar tudo novamente.
+2.	Criamos a classe abstrata Veiculo, que contém o atributo identificador e um método para gerá-lo.
+3. Carro e Moto herdam de Veiculo e implementam clone(), permitindo a cópia dos objetos mantendo o identificador.
+4.	No main, podemos criar um carro ou uma moto e cloná-los sem precisar configurar tudo novamente.
 
 
 ### Participantes:
-- **Prototype (IPrototype)**
+- *Prototype (IPrototype)*
 declara uma interface para clonar a si próprio.
-- **ConcretePrototype (Carro, Moto)**
-implementa uma operação para clonar a si próprio.
-- **Client (Client)**
-cria um novo objeto solicitando a um protótipo que clone a si próprio.
+- *ConcretePrototype (Carro, Moto)*
+implementa uma operação para clonar a si próprio, herdando de *veiculo*
+- *Veiculo*
+classe base que gerencia o identificador único dos veículos.
+- *Client (Client)*
+cria um novo objeto solicitando a um protótipo que clone a si próprio.
